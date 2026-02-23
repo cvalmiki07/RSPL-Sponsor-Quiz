@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSPL 2026 — Auction Persona Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f5f0e8;
+    --cream: #ede8dc;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --red: #c23b2a;
+    --green: #2a7a4f;
+    --blue: #1a4a7a;
+    --mid: #6b6560;
+    --border: #c8c0b0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    width: 100%;
+    background: var(--gold);
+    overflow: hidden;
+    padding: 6px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .ticker {
+    display: flex;
+    width: max-content;
+    animation: ticker 35s linear infinite;
+  }
+  .ticker span {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink);
+    padding: 0 40px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    white-space: nowrap;
+  }
+  @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+
+  /* ── HEADER ── */
+  .header {
+    width: 100%;
+    max-width: 860px;
+    padding: 52px 24px 0;
+    text-align: center;
+  }
+  .league-badge {
+    display: inline-block;
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .2em;
+    padding: 5px 16px;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 10vw, 96px);
+    color: var(--paper);
+    line-height: .95;
+    letter-spacing: .02em;
+    margin-bottom: 8px;
+  }
+  h1 em {
+    color: var(--gold);
+    font-style: normal;
+  }
+  .subtitle {
+    color: var(--mid);
+    font-size: 14px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  /* ── SCREEN CONTAINER ── */
+  .screen {
+    display: none;
+    width: 100%;
+    max-width: 860px;
+    padding: 0 24px 80px;
+    animation: fadeUp .4s ease both;
+  }
+  .screen.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── INTRO SCREEN ── */
+  .intro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 32px;
+  }
+  .intro-card {
+    background: #14141c;
+    border: 1px solid #222230;
+    padding: 20px 22px;
+    cursor: default;
+  }
+  .intro-card .ic-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--gold);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .intro-card .ic-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--paper);
+    letter-spacing: .04em;
+  }
+  .intro-card .ic-sub {
+    font-size: 11px;
+    color: var(--mid);
+    margin-top: 2px;
+  }
+  .start-btn {
+    display: block;
+    width: 100%;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: .12em;
+    padding: 18px;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    text-transform: uppercase;
+  }
+  .start-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .start-btn:active { transform: translateY(0); }
+
+  /* ── QUIZ ── */
+  .q-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .q-counter {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: .1em;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 2px;
+    background: #222230;
+    margin: 0 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    transition: width .4s ease;
+  }
+  .q-round-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--mid);
+    letter-spacing: .1em;
+  }
+
+  .question-block {
+    background: #0f0f17;
+    border: 1px solid #1e1e2e;
+    border-left: 3px solid var(--gold);
+    padding: 28px 28px 24px;
+    margin-bottom: 16px;
+  }
+  .q-scenario {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--gold);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .q-text {
+    font-size: 17px;
+    color: var(--paper);
+    line-height: 1.55;
+    font-weight: 400;
+  }
+
+  .options {
+    display: grid;
+    gap: 8px;
+  }
+  .option-btn {
+    background: #0f0f17;
+    border: 1px solid #222230;
+    padding: 16px 20px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    transition: all .18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: var(--gold);
+    opacity: .08;
+    transition: width .2s;
+  }
+  .option-btn:hover { border-color: var(--gold); color: var(--gold-light); }
+  .option-btn:hover::before { width: 100%; }
+  .option-btn.selected {
+    border-color: var(--gold);
+    background: #1a160a;
+    color: var(--gold-light);
+  }
+  .option-btn.selected::before { width: 100%; opacity: .15; }
+  .option-letter {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: .1em;
+    margin-right: 12px;
+    opacity: .7;
+  }
+
+  .nav-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+  .next-btn {
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: .14em;
+    padding: 12px 36px;
+    cursor: pointer;
+    transition: all .2s;
+    opacity: .4;
+    pointer-events: none;
+  }
+  .next-btn.ready {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .next-btn.ready:hover {
+    background: var(--gold);
+    color: var(--ink);
+  }
+
+  /* ── RESULT SCREEN ── */
+  .result-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .result-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--mid);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .result-persona {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 8vw, 80px);
+    line-height: 1;
+    letter-spacing: .04em;
+    margin-bottom: 8px;
+  }
+  .result-tagline {
+    font-size: 15px;
+    color: var(--mid);
+    font-style: italic;
+    margin-bottom: 28px;
+  }
+  .confidence-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .confidence-bar {
+    width: 200px;
+    height: 4px;
+    background: #222230;
+    position: relative;
+    overflow: hidden;
+  }
+  .confidence-fill {
+    height: 100%;
+    background: var(--gold);
+    transition: width 1s ease .3s;
+  }
+  .confidence-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+  }
+
+  .persona-card {
+    background: #0f0f17;
+    border: 1px solid #1e1e2e;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .pc-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #1e1e2e;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .pc-icon {
+    font-size: 32px;
+    line-height: 1;
+  }
+  .pc-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: .06em;
+  }
+  .pc-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .pc-section {
+    padding: 20px 24px;
+    border-right: 1px solid #1e1e2e;
+  }
+  .pc-section:last-child { border-right: none; }
+  .pc-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--gold);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .pc-section p, .pc-section li {
+    font-size: 13px;
+    color: #b0a898;
+    line-height: 1.6;
+  }
+  .pc-section ul { padding-left: 14px; }
+  .pc-section li { margin-bottom: 4px; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-bottom: 24px;
+  }
+  .stat-box {
+    background: #0f0f17;
+    border: 1px solid #1e1e2e;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: .04em;
+    margin-bottom: 2px;
+  }
+  .stat-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--mid);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .strategy-box {
+    background: #0a0a0f;
+    border: 1px solid #1e1e2e;
+    border-left: 3px solid var(--gold);
+    padding: 20px 22px;
+    margin-bottom: 24px;
+  }
+  .strategy-box h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .strategy-box p {
+    font-size: 14px;
+    color: #b0a898;
+    line-height: 1.6;
+  }
+  .strategy-box strong { color: var(--paper); }
+
+  .rivals-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 32px;
+  }
+  .rival-box {
+    background: #0f0f17;
+    border: 1px solid #1e1e2e;
+    padding: 16px 18px;
+  }
+  .rival-box .rb-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .rb-label.threat { color: var(--red); }
+  .rb-label.ally   { color: var(--green); }
+  .rival-box p { font-size: 13px; color: #b0a898; line-height: 1.5; }
+
+  .retake-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1.5px solid #333340;
+    color: var(--mid);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .04em;
+  }
+  .retake-btn:hover { border-color: var(--mid); color: var(--paper); }
+
+  /* score bars in result */
+  .score-bars { margin-bottom: 24px; }
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .score-name {
+    font-size: 12px;
+    color: var(--mid);
+    width: 160px;
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: .05em;
+  }
+  .score-track {
+    flex: 1;
+    height: 6px;
+    background: #1a1a25;
+    overflow: hidden;
+  }
+  .score-fill {
+    height: 100%;
+    background: var(--gold);
+    opacity: .5;
+    transition: width 1s ease;
+  }
+  .score-fill.top { opacity: 1; background: var(--gold); }
+  .score-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--mid);
+    width: 28px;
+    text-align: right;
+  }
+
+  @media (max-width: 600px) {
+    .intro-grid { grid-template-columns: 1fr 1fr; }
+    .pc-body { grid-template-columns: 1fr; }
+    .pc-section { border-right: none; border-bottom: 1px solid #1e1e2e; }
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .rivals-row { grid-template-columns: 1fr; }
+  }
+
+  /* ── IDENTIFICATION SCREEN ── */
+  .id-intro {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .id-intro p {
+    font-size: 15px;
+    color: #b0a898;
+    line-height: 1.65;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .team-btn {
+    background: #0f0f17;
+    border: 1.5px solid #222230;
+    padding: 16px 20px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    transition: all .18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .team-btn::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: var(--gold);
+    opacity: .08;
+    transition: width .2s;
+  }
+  .team-btn:hover { border-color: var(--gold); }
+  .team-btn:hover::before { width: 100%; }
+  .team-btn.selected {
+    border-color: var(--gold);
+    background: #1a160a;
+  }
+  .team-btn.selected::before { width: 100%; opacity: .15; }
+  .team-btn .tb-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: .06em;
+    color: var(--paper);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .team-btn.selected .tb-name { color: var(--gold-light); }
+  .team-btn .tb-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--mid);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .id-name-wrap {
+    margin-bottom: 24px;
+  }
+  .id-name-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .id-name-input {
+    width: 100%;
+    background: #0f0f17;
+    border: 1.5px solid #222230;
+    color: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    padding: 14px 18px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .id-name-input::placeholder { color: #3a3a4a; }
+  .id-name-input:focus { border-color: var(--gold); }
+  .id-proceed-btn {
+    display: block;
+    width: 100%;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: .12em;
+    padding: 18px;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    opacity: .35;
+    pointer-events: none;
+  }
+  .id-proceed-btn.ready { opacity: 1; pointer-events: all; }
+  .id-proceed-btn.ready:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+  /* ── RESULT NAME TAG ── */
+  .result-name-tag {
+    display: inline-block;
+    background: #1a160a;
+    border: 1px solid var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 480px) {
+    .team-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span>RSPL 2026 DRAFT · MARCH 13TH · AUCTION OPENS 19:00 · 10 FRANCHISES · 150 PLAYERS · DISCOVER YOUR BIDDING PERSONA ·</span>
+    <span>RSPL 2026 DRAFT · MARCH 13TH · AUCTION OPENS 19:00 · 10 FRANCHISES · 150 PLAYERS · DISCOVER YOUR BIDDING PERSONA ·</span>
+  </div>
+</div>
+
+<div class="header">
+  <div class="league-badge">RSPL 2026 · Franchise Draft</div>
+  <h1>What Kind of<br><em>Bidder</em> Are You?</h1>
+  <p class="subtitle">9 questions · Identifies your auction archetype · Takes 3 minutes</p>
+</div>
+
+<!-- ═══════════════════════════ IDENTIFICATION SCREEN ═══════════════════════════ -->
+<div class="screen active" id="screen-identify">
+  <div class="id-intro">
+    <p>Before we start — tell us who you are. Select your franchise below, then enter your name. This links your persona result back to your team for auction day.</p>
+  </div>
+
+  <div class="id-name-wrap">
+    <div class="id-name-label">Your Name</div>
+    <input class="id-name-input" id="sponsor-name" type="text" placeholder="e.g. Rahul Sharma" autocomplete="off" oninput="checkIdReady()" />
+  </div>
+
+  <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px;">Select Your Franchise</div>
+  <div class="team-grid" id="team-grid">
+    <button class="team-btn" onclick="selectTeam(this,'Super Kings')">
+      <span class="tb-name">Super Kings</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'RRoyals')">
+      <span class="tb-name">RRoyals</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'Maratha Titans')">
+      <span class="tb-name">Maratha Titans</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'Delhi Durandhars')">
+      <span class="tb-name">Delhi Durandhars</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'Royal Kings')">
+      <span class="tb-name">Royal Kings</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'Sunrisers')">
+      <span class="tb-name">Sunrisers</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'Livingston Giants')">
+      <span class="tb-name">Livingston Giants</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'SOL Mumbai')">
+      <span class="tb-name">SOL Mumbai</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'Supreme Knight Warriors')">
+      <span class="tb-name">Supreme Knight Warriors</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+    <button class="team-btn" onclick="selectTeam(this,'Royal Challengers')">
+      <span class="tb-name">Royal Challengers</span>
+      <span class="tb-sub">Franchise · RSPL 2026</span>
+    </button>
+  </div>
+
+  <button class="id-proceed-btn" id="id-proceed-btn" onclick="proceedToIntro()">Continue to Assessment →</button>
+</div>
+
+<!-- ═══════════════════════════ INTRO SCREEN ═══════════════════════════ -->
+<div class="screen" id="screen-intro">
+  <div class="intro-grid">
+    <div class="intro-card">
+      <div class="ic-label">Archetypes</div>
+      <div class="ic-val">10</div>
+      <div class="ic-sub">Distinct bidding personas</div>
+    </div>
+    <div class="intro-card">
+      <div class="ic-label">Questions</div>
+      <div class="ic-val">8</div>
+      <div class="ic-sub">Situational scenarios</div>
+    </div>
+    <div class="intro-card">
+      <div class="ic-label">Budget</div>
+      <div class="ic-val">9.5M</div>
+      <div class="ic-sub">Your starting war chest</div>
+    </div>
+    <div class="intro-card">
+      <div class="ic-label">Draft Day</div>
+      <div class="ic-val">MAR 13</div>
+      <div class="ic-sub">Livingston, NJ · 19:00</div>
+    </div>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">Begin Persona Assessment →</button>
+</div>
+
+<!-- ═══════════════════════════ QUIZ SCREEN ═══════════════════════════ -->
+<div class="screen" id="screen-quiz">
+  <div class="q-meta">
+    <span class="q-counter" id="q-counter">Q 1 / 8</span>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <span class="q-round-tag" id="q-round-tag">ROUND 1</span>
+  </div>
+  <div class="question-block">
+    <div class="q-scenario" id="q-scenario"></div>
+    <div class="q-text" id="q-text"></div>
+  </div>
+  <div class="options" id="options"></div>
+  <div class="nav-row">
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ RESULT SCREEN ═══════════════════════════ -->
+<div class="screen" id="screen-result">
+  <div class="result-header">
+    <div class="result-name-tag" id="result-name-tag"></div>
+    <div class="result-label">Your Auction Persona</div>
+    <div class="result-persona" id="result-persona-name"></div>
+    <div class="result-tagline" id="result-tagline"></div>
+    <div class="confidence-bar-wrap">
+      <span class="confidence-label" id="conf-pct"></span>
+      <div class="confidence-bar"><div class="confidence-fill" id="conf-fill" style="width:0%"></div></div>
+      <span class="confidence-label">Match</span>
+    </div>
+  </div>
+
+  <div class="score-bars" id="score-bars"></div>
+  <div class="stats-row" id="stats-row"></div>
+  <div class="strategy-box" id="strategy-box"></div>
+  <div id="persona-card-body"></div>
+  <div class="rivals-row" id="rivals-row"></div>
+
+  <button class="retake-btn" onclick="retake()">↩ Retake the assessment</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// PERSONA DEFINITIONS
+// ══════════════════════════════════════════
+const PERSONAS = {
+  'Alpha Aggressor': {
+    icon: '⚔️',
+    color: '#c23b2a',
+    tagline: '"Win the room. Win the stars. Win the league."',
+    description: 'You believe trophies are won in R1. You go hard for the top-5 players, pay above market without regret, and trust that elite talent wins over optimized depth. Your squad has a terrifying top-3 but your bench might be thin.',
+    strategy: 'Spend <strong>60–70% of budget in R1</strong> on 2 marquee players. Accept that R2–R3 will be base-price depth. Your star power should carry the team.',
+    r1_behavior: 'Bid 120–135% of fair value on top-10 players. Do not flinch.',
+    r2_behavior: 'Spend sparingly — 1–2 picks at base price only.',
+    r3_behavior: 'Essentially done. Pick up fillers.',
+    threat: 'Late-Game Hoarder — they have the budget you spent in R1, and they\'ll use it wisely in R2/R3.',
+    ally: 'Batting Purist — you both chase the same R1 stars and will push each other\'s prices up. Neither of you backs down.',
+    stats: { eff: '17.1', rank: '13.6', spend_pct: '43%', r1_picks: '2.0' },
+    sim_note: 'Wins most runs that contain Pranith Shetty or Bhishma Thakkar. Budget depletes fast.'
+  },
+  'Captain Loyalist': {
+    icon: '👑',
+    color: '#c9a84c',
+    tagline: '"If he\'s worn the armband, he\'s worth every rupee."',
+    description: 'Leadership metrics matter to you more than raw stats. You pay a significant premium for captains and proven leaders — players who elevate a dressing room. You\'ll win Chaitanya Psr every single run. Your team has chemistry; it may lack depth.',
+    strategy: 'Identify the <strong>2–3 captains or vice-captains</strong> in the pool before auction day. Budget 1.4x fair value for each. Everything else is filler.',
+    r1_behavior: 'Pay 140% of fair value for any recognised captain. Walk away from non-captains.',
+    r2_behavior: 'Target Chaitanya Psr specifically — you will always win him.',
+    r3_behavior: 'Light spend, pick up R3 depth at base.',
+    threat: 'Batting Purist — when both want the same captain-batter, the war is expensive and irrational.',
+    ally: 'Alpha Aggressor — you both identify value in elite players and push each other\'s prices into premium territory, which benefits neither.',
+    stats: { eff: '17.6', rank: '14.9', spend_pct: '40%', r1_picks: '2.0' },
+    sim_note: 'Wins Chaitanya Psr 100% of runs. Wins Raj Rajendran 100% of runs (sponsor). Heavy R1 spend.'
+  },
+  'Bowling General': {
+    icon: '🎯',
+    color: '#2a7a4f',
+    tagline: '"Wickets win matches. Everything else is theatre."',
+    description: 'You have a simple philosophy: bowl teams out, chase anything. You target players with bowl index ≥65 and pay a premium for it. Your squad will take wickets consistently but may struggle when you need 15 in the last over.',
+    strategy: '<strong>Never bid above 60% of fair value on a pure batter.</strong> Save every rupee for the top-5 bowlers in the pool. Manmohan and Muralee are your people.',
+    r1_behavior: 'Target Kudrat Goswami, Mohan Madala, Manmohan. Pay 110–125% FV.',
+    r2_behavior: 'Sweep Amit Patel, Darshan, Mukesh Dixit.',
+    r3_behavior: 'Load up — Sri Pittala and Bhavin S are your anchors here.',
+    threat: 'Balanced Engineer — they want the same high-bowl-index all-rounders but are willing to pay more for the bat side too.',
+    ally: 'Shadow Builder — both of you value bowling assets, but Shadow Builder is more patient. You\'ll sometimes push each other\'s prices up on the same bowler.',
+    stats: { eff: '17.6', rank: '30.0', spend_pct: '35%', r1_picks: '2.0' },
+    sim_note: 'Owns Sri Pittala and Bhavin S in 80/150 runs each. Consistent, low-variance strategy.'
+  },
+  'Batting Purist': {
+    icon: '🏏',
+    color: '#1a4a7a',
+    tagline: '"Give me batters. I\'ll find a way to defend any total."',
+    description: 'Bat index ≥60 is your north star. You overpay for stroke-makers and believe run-scoring ability is the scarcest asset in the room. You\'ll win Ankur and Vaibhav Gupta consistently — and you\'ll push Anand Singh\'s price higher than anyone.',
+    strategy: '<strong>Bat index is your only filter.</strong> You\'ll pay 115–130% FV for any player with bat ≥60. Budget accordingly — your R1 spend will be significant.',
+    r1_behavior: 'Target Anand Singh (bat 78), Bhishma Thakkar (bat 95.7), Amit Sethiya (bat 80). Pay up.',
+    r2_behavior: 'Advit, Chaitanya Psr, Pratik Chandarana. Fight for all of them.',
+    r3_behavior: 'Light — most high-bat players are gone by now.',
+    threat: 'Captain Loyalist — when they want a captain-batter, you\'re competing for the same player at inflated multipliers.',
+    ally: 'Data Guy — rational and won\'t overpay, so they won\'t push your prices up much.',
+    stats: { eff: '13.1', rank: '46.0', spend_pct: '40%', r1_picks: '2.0' },
+    sim_note: 'Wins Anand Singh 36% of runs. Primary driver of Ankur and Vaibhav Gupta prices.'
+  },
+  'Balanced Engineer': {
+    icon: '⚖️',
+    color: '#5a4a8a',
+    tagline: '"The perfect all-rounder doesn\'t exist — but I\'ll build one pick by pick."',
+    description: 'You optimise for balance — bat/bowl ratio is your obsession. A player who scores 70 bat and 65 bowl is worth more to you than a 95 bat / 40 bowl. You build cohesive, flexible squads that can adapt mid-match.',
+    strategy: 'Calculate <strong>bat/bowl ratio before every pick.</strong> Target ratio ≥0.85. You\'re willing to pay 20–35% premium for genuinely balanced all-rounders.',
+    r1_behavior: 'Varun (94/82) and Anand Singh (78/72) are near-perfect. Target both.',
+    r2_behavior: 'Pranay Arya, Aadi — balanced developing all-rounders at R2 prices.',
+    r3_behavior: 'Rama, Tellie George. Consistent spend across all rounds.',
+    threat: 'Alpha Aggressor — pays more for the same R1 all-rounders regardless of balance.',
+    ally: 'Value Sniper — both patient in R1, both hunting mid-tier value. Sometimes you\'re competing for the same R2 players.',
+    stats: { eff: '14.2', rank: '37.3', spend_pct: '40%', r1_picks: '2.0' },
+    sim_note: 'Most consistent squad builder. Lowest variance across all 150 runs. Never elite, never weak.'
+  },
+  'Shadow Builder': {
+    icon: '🌑',
+    color: '#4a3060',
+    tagline: '"Let them fight over the stars. I\'ll build the squad they never saw coming."',
+    description: 'You let others overpay for rank #1–3, then strike decisively at #4–15 where value is genuine but competition is less heated. You have a clear player watchlist that nobody else has studied as carefully.',
+    strategy: '<strong>Never bid above 85% FV on players ranked #1–3.</strong> Your budget is for the players ranked #7–20 who everyone forgot about once the top-3 went to war.',
+    r1_behavior: 'Let Varun and Pranith Shetty go — deliberately. Then win Manmohan or Nilesh Shah at 105% FV.',
+    r2_behavior: 'This is your R1. Spend aggressively on Ritesh Patni, Shreyesh P.',
+    r3_behavior: 'Strong here — load up. You\'ve preserved budget for exactly this.',
+    threat: 'Late-Game Hoarder — also patient in R1, but they go even later. You\'re competing in R2/R3.',
+    ally: 'Data Guy — both of you are rational and won\'t get into emotional wars. You can coexist peacefully in R1.',
+    stats: { eff: '14.6', rank: '46.9', spend_pct: '35%', r1_picks: '2.0' },
+    sim_note: 'Owns Nilesh Shah 34/150 runs. Consistent R2/R3 spender. Low variance, high remaining budget.'
+  },
+  'Value Sniper': {
+    icon: '🔭',
+    color: '#2a6060',
+    tagline: '"I don\'t pay for names. I pay for performance per rupee."',
+    description: 'You have done your analysis. You know exactly which players are overpriced in R1 and you refuse to participate in those auctions. Your budget goes into the R2 sweet spot — ranked #26–40 — where talent is real but competition is irrational.',
+    strategy: '<strong>Never exceed 75% of fair value in R1.</strong> Your war chest deploys in R2 at 115% FV on players ranked #26–35. You\'ll win more picks for less money.',
+    r1_behavior: 'Deliberate abstention on anyone ranked #1–10. Bid ceiling 75% FV on #11–25.',
+    r2_behavior: 'This is your R1 — go hard on Chandra, Akash Tayal, Amit Patel.',
+    r3_behavior: 'Continue spending — Sri Pittala, Suri, Sanchit Bitta. Nobody else is here.',
+    threat: 'Chaos Creator — randomly aggressive in exactly the rounds you want to be calm. Unpredictable.',
+    ally: 'Late-Game Hoarder — both of you pass on R1. You split R2/R3, so you\'re rarely directly competing.',
+    stats: { eff: '15.2', rank: '43.1', spend_pct: '35%', r1_picks: '2.0' },
+    sim_note: 'Wins Chandra 35/150 runs. Most consistent R2 buyer. Always has budget. Never panic bids.'
+  },
+  'Data Guy': {
+    icon: '📊',
+    color: '#1a5a3a',
+    tagline: '"The model says 347K. I\'ll pay 347K. Not 350K."',
+    description: 'Every bid you make is derived from a number. You pay fair value and not a rupee more. Your efficiency is the highest in the room because you never overpay — but you also miss players when the room goes above your model.',
+    strategy: '<strong>Hard ceiling = fair value × 1.05.</strong> You never exceed it regardless of emotional pressure. Your squad will be the most efficiently priced in the room.',
+    r1_behavior: 'Pay exactly fair value. Let whoever bids above walk away with the regret.',
+    r2_behavior: 'Sweep the middle of R2 — Anil, Darshan, Manish C at near-base.',
+    r3_behavior: 'Jagan, Nitin Mahadev, Tellie George. All at model price.',
+    threat: 'Chaos Creator — completely immune to rational pricing. Can outbid you by accident at 1.6x.',
+    ally: 'Shadow Builder — both rational, both patient. You share a dislike of emotional bidding.',
+    stats: { eff: '22.6', rank: '25.4', spend_pct: '28%', r1_picks: '2.0' },
+    sim_note: 'HIGHEST efficiency in 150-run simulation. Low spend, high-quality squad. Top performer.'
+  },
+  'Late-Game Hoarder': {
+    icon: '💰',
+    color: '#8a6a1a',
+    tagline: '"They\'ll run out of money. I\'ll run out of patience first."',
+    description: 'You believe most teams will be budget-constrained by R3 and desperate. You exploit that desperation. Minimal R1 spend, minimal R2 spend — then maximum aggression in R3 when others are watching their wallets.',
+    strategy: '<strong>Spend ≤10% of budget in R1.</strong> Accumulate picks in R2/R3 when others are spent. You\'ll have 7M+ entering R3 while others have 2M. Use every rupee of it.',
+    r1_behavior: 'Maximum bid = base price + 1 increment. Let everyone else overpay.',
+    r2_behavior: 'Start deploying — 3 picks at moderate prices. Building momentum.',
+    r3_behavior: 'Unleash. You have the most budget in the room. Win every contested pick.',
+    threat: 'Data Guy — also efficient but spends more evenly. In R3 you\'re competing for the same players with similar budget levels.',
+    ally: 'Value Sniper — both of you are patient in R1. You tend to dominate different rounds so conflict is minimal.',
+    stats: { eff: '22.1', rank: '51.0', spend_pct: '22%', r1_picks: '0.5' },
+    sim_note: 'Second-highest efficiency. Leaves 7.4M after R3. Dominant in R4/R5. High remaining budget.'
+  },
+  'Chaos Creator': {
+    icon: '🎲',
+    color: '#8a2a4a',
+    tagline: '"I don\'t have a strategy. That IS my strategy."',
+    description: 'You\'re unpredictable by design or by nature. Sometimes you pay 1.6x FV on a player you love. Sometimes you pass on someone ranked top-5. The room can\'t model you — and you like it that way. Your squad is highly variable.',
+    strategy: '<strong>Embrace variance.</strong> Your strength is that nobody can predict your ceiling. Use that — sometimes bluff high, sometimes walk away early. Keep everyone guessing.',
+    r1_behavior: 'Completely random — 60% to 160% of FV depending on your gut.',
+    r2_behavior: 'Same chaos. You might sweep R2 or ignore it entirely.',
+    r3_behavior: 'Whatever feels right.',
+    threat: 'Data Guy — your randomness is their nightmare but also your own. You\'ll sometimes pay 2x FV for someone they got at 1x.',
+    ally: 'Captain Loyalist — both of you have emotional non-rational triggers. You can coexist because your triggers are different.',
+    stats: { eff: '11.8', rank: '45.0', spend_pct: '44%', r1_picks: '2.0' },
+    sim_note: 'Lowest efficiency. Highest variance. Sometimes builds elite squads, sometimes disasters. High drama.'
+  }
+};
+
+// ══════════════════════════════════════════
+// QUESTIONS
+// ══════════════════════════════════════════
+const QUESTIONS = [
+  {
+    scenario: 'Round 1 · Pick 1 · First player out of the bag',
+    text: 'The #1 ranked player in the entire pool is drawn first. Bidding has already climbed well above base price and rivals are pushing hard. You have your full budget intact. What do you do?',
+    round_tag: 'R1 · Elite Stars',
+    options: [
+      { text: 'I go as far as I need to. The best player is the best player — I\'ll make the budget work.', scores: { 'Alpha Aggressor': 3, 'Captain Loyalist': 1 } },
+      { text: 'I bid up to what the data says he\'s worth — fair price — then walk away if it goes higher.', scores: { 'Data Guy': 3, 'Balanced Engineer': 1 } },
+      { text: 'I already decided before the auction I wouldn\'t chase R1 stars. I sit this one out.', scores: { 'Value Sniper': 3, 'Late-Game Hoarder': 2 } },
+      { text: 'Only if he\'s worn the captaincy armband. Leadership pedigree changes my ceiling entirely.', scores: { 'Captain Loyalist': 3, 'Batting Purist': 1 } },
+    ]
+  },
+  {
+    scenario: 'Round 1 · Budget Check · Mid-way through R1',
+    text: 'You\'ve already used most of your planned R1 budget on two picks. A solid but non-elite player — ranked around #18 in the pool — comes up next. The room is pushing him noticeably above what you consider fair value. Do you follow?',
+    round_tag: 'R1 · Budget Discipline',
+    options: [
+      { text: 'No. My R1 budget is gone. I hold the line and let him go without a second thought.', scores: { 'Data Guy': 3, 'Value Sniper': 2, 'Late-Game Hoarder': 2 } },
+      { text: 'Yes — he\'s quality and I\'d rather stretch slightly than miss a solid mid-tier player.', scores: { 'Alpha Aggressor': 2, 'Balanced Engineer': 2, 'Bowling General': 1 } },
+      { text: 'Depends entirely on his batting ability. Strong bat? I stretch. Weak bat? I walk.', scores: { 'Batting Purist': 3, 'Balanced Engineer': 1 } },
+      { text: 'I throw in a high bid to see who flinches — maybe I drain a rival\'s budget in the process.', scores: { 'Chaos Creator': 3, 'Alpha Aggressor': 1 } },
+    ]
+  },
+  {
+    scenario: 'Round 2 · The Keeper Dilemma',
+    text: 'The best keeper-batter in the pool comes up in R2. You don\'t desperately need a keeper right now, but he\'s genuinely quality. Bidding has slowed and he\'s available below what you\'d consider his fair price. Do you enter?',
+    round_tag: 'R2 · Positional Value',
+    options: [
+      { text: 'Yes — I\'ll pay a fair premium. Keeping is a multiplier role. You don\'t let one go cheap.', scores: { 'Balanced Engineer': 2, 'Batting Purist': 2, 'Value Sniper': 2 } },
+      { text: 'Only at or below fair value. Not a single increment above what my model says.', scores: { 'Data Guy': 3, 'Shadow Builder': 1 } },
+      { text: 'Pass. I\'ll find a keeper in R3 at base price and bank the difference now.', scores: { 'Late-Game Hoarder': 3, 'Value Sniper': 1 } },
+      { text: 'Win him — having a quality keeper-batter opens up selection every single match.', scores: { 'Bowling General': 1, 'Alpha Aggressor': 1, 'Captain Loyalist': 1, 'Chaos Creator': 2 } },
+    ]
+  },
+  {
+    scenario: 'Round 2 · War Zone · Two rivals want the same player',
+    text: 'A bat-heavy all-rounder in R2 has been pushed significantly above fair value by two rival teams competing hard. You want him too, but the price is now nearly 50% above what your model says he\'s worth. What do you do?',
+    round_tag: 'R2 · Auction Psychology',
+    options: [
+      { text: 'I walk away. Fifty percent above fair value is emotional spending — the data says stop.', scores: { 'Data Guy': 3, 'Value Sniper': 2 } },
+      { text: 'His batting numbers are elite. I\'ll pay a significant premium and not regret it.', scores: { 'Batting Purist': 3, 'Alpha Aggressor': 1 } },
+      { text: 'I need a quality bat-first all-rounder and he\'s the best one left. Win at whatever it takes.', scores: { 'Captain Loyalist': 2, 'Chaos Creator': 2, 'Balanced Engineer': 1 } },
+      { text: 'I push one more increment deliberately to drain the rivals\' budgets, then drop out.', scores: { 'Shadow Builder': 3, 'Late-Game Hoarder': 2 } },
+    ]
+  },
+  {
+    scenario: 'Round 2 · The Specialist Bowler',
+    text: 'A pure wicket-taking bowler in R2 has elite bowling numbers but an almost zero batting contribution. The room is quiet — you could win him at or very near his base price. Do you bid?',
+    round_tag: 'R2 · Role Specialisation',
+    options: [
+      { text: 'Absolutely — elite bowling at near-base price is exactly the value I came here for.', scores: { 'Bowling General': 3, 'Shadow Builder': 2 } },
+      { text: 'No. A player who can\'t contribute with the bat is a selection problem I\'d rather avoid.', scores: { 'Batting Purist': 3, 'Balanced Engineer': 2 } },
+      { text: 'Yes, but only at base price. He\'s one-dimensional and the price should reflect that.', scores: { 'Data Guy': 2, 'Value Sniper': 2, 'Late-Game Hoarder': 1 } },
+      { text: 'It depends on my squad balance at that point. If I\'m already bat-heavy, he fills a real gap.', scores: { 'Balanced Engineer': 3, 'Bowling General': 1 } },
+    ]
+  },
+  {
+    scenario: 'Round 3 · The Long Game',
+    text: 'You enter R3 with significantly more budget than most of the room. Several teams are nearly spent and quality players are going at base price because nobody can compete. What\'s your move?',
+    round_tag: 'R3 · Budget Advantage',
+    options: [
+      { text: 'Sweep aggressively — this is exactly the moment I saved my budget for. Win everything of quality.', scores: { 'Late-Game Hoarder': 3, 'Value Sniper': 2 } },
+      { text: 'Bid to fair value on each pick — I won\'t overpay just because I can afford to.', scores: { 'Data Guy': 3, 'Shadow Builder': 2 } },
+      { text: 'I target the bowlers specifically — strong bowling at base price is a genuine steal.', scores: { 'Bowling General': 3, 'Value Sniper': 1 } },
+      { text: 'Having budget in R3 is a weapon — deploy it fully and dominate the round entirely.', scores: { 'Alpha Aggressor': 1, 'Chaos Creator': 2, 'Balanced Engineer': 1 } },
+    ]
+  },
+  {
+    scenario: 'Philosophy · Squad Building',
+    text: 'You\'re building your squad from scratch. Which statement most closely describes your core belief going into this auction?',
+    round_tag: 'Philosophy · Identity',
+    options: [
+      { text: '"Two elite players and the rest at base price beats 15 solid ones every time."', scores: { 'Alpha Aggressor': 3, 'Captain Loyalist': 2 } },
+      { text: '"Every player in my squad must have a clear, defined role. No dead weight."', scores: { 'Balanced Engineer': 3, 'Data Guy': 2 } },
+      { text: '"Give me a bowling attack that takes 20 wickets. I\'ll build everything else around it."', scores: { 'Bowling General': 3, 'Shadow Builder': 1 } },
+      { text: '"The team with the best value per rupee spent wins the long game."', scores: { 'Value Sniper': 3, 'Data Guy': 2, 'Late-Game Hoarder': 1 } },
+    ]
+  },
+  {
+    scenario: 'Round 2 · The Loyalty Test',
+    text: 'A player you personally know well — someone who played for your previous team or captained a side you were part of — comes up in R2. He is ranked outside the top 20. Objectively, his numbers are solid but not spectacular. The room is quiet. What do you do?',
+    round_tag: 'R2 · Loyalty & History',
+    options: [
+      { text: 'I win him, full stop. He knows our culture, our calls, our game. That's worth more than any index number.', scores: { 'Captain Loyalist': 3 } },
+      { text: 'I bid, but only up to fair value — the personal connection doesn't change what he's worth on paper.', scores: { 'Data Guy': 3, 'Balanced Engineer': 1 } },
+      { text: 'I let him go. Sentiment is a budget leak. I'll congratulate him after the auction.', scores: { 'Value Sniper': 3, 'Late-Game Hoarder': 2, 'Alpha Aggressor': 1 } },
+      { text: 'I pay a small premium — maybe 10–15% above fair value — as a nod to the history. But I have a ceiling.', scores: { 'Captain Loyalist': 2, 'Balanced Engineer': 2, 'Bowling General': 1 } },
+    ]
+  },
+  {
+    scenario: 'Final Question · Auction Day Mindset',
+    text: 'Thirty minutes before the auction starts, a rival tells you they\'re going hard after the top-2 players in R1 and to "prepare for a war." How do you respond internally?',
+    round_tag: 'Psychology · Pressure',
+    options: [
+      { text: 'Good. I\'m going after those same players too. May the best bid win.', scores: { 'Alpha Aggressor': 3, 'Chaos Creator': 1 } },
+      { text: 'Fine — let them fight each other. I\'ll quietly take the players nobody\'s watching.', scores: { 'Shadow Builder': 3, 'Value Sniper': 2, 'Late-Game Hoarder': 1 } },
+      { text: 'Useful intel. I\'ll adjust my R2–R3 watchlist to capture what they\'ll be too spent to chase.', scores: { 'Data Guy': 3, 'Balanced Engineer': 2 } },
+      { text: 'I\'ll bid those players up strategically to drain their budgets — even if I don\'t want them.', scores: { 'Chaos Creator': 3, 'Shadow Builder': 1 } },
+    ]
+  }
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let currentQ   = 0;
+let selected   = null;
+let scores     = {};
+let sponsorName = '';
+let sponsorTeam = '';
+Object.keys(PERSONAS).forEach(p => scores[p] = 0);
+
+// ══════════════════════════════════════════
+// FUNCTIONS
+// ══════════════════════════════════════════
+function selectTeam(btn, team) {
+  document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  sponsorTeam = team;
+  checkIdReady();
+}
+
+function checkIdReady() {
+  sponsorName = document.getElementById('sponsor-name').value.trim();
+  const btn = document.getElementById('id-proceed-btn');
+  if (sponsorName.length >= 2 && sponsorTeam) {
+    btn.classList.add('ready');
+  } else {
+    btn.classList.remove('ready');
+  }
+}
+
+function proceedToIntro() {
+  if (!sponsorName || !sponsorTeam) return;
+  showScreen('screen-intro');
+}
+
+function startQuiz() {
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  // re-trigger animation
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = '';
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  selected = null;
+
+  document.getElementById('q-counter').textContent = `Q ${currentQ+1} / ${QUESTIONS.length}`;
+  document.getElementById('q-round-tag').textContent = q.round_tag;
+  document.getElementById('progress-fill').style.width = `${(currentQ/QUESTIONS.length)*100}%`;
+  document.getElementById('q-scenario').textContent = q.scenario;
+  document.getElementById('q-text').textContent = q.text;
+
+  const letters = ['A','B','C','D'];
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${opt.text}`;
+    btn.onclick = () => selectOption(i, btn);
+    opts.appendChild(btn);
+  });
+
+  const nb = document.getElementById('next-btn');
+  nb.classList.remove('ready');
+  nb.textContent = currentQ === QUESTIONS.length - 1 ? 'See My Persona →' : 'Next →';
+}
+
+function selectOption(i, btn) {
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selected = i;
+  document.getElementById('next-btn').classList.add('ready');
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+
+  // Add scores
+  const opt = QUESTIONS[currentQ].options[selected];
+  Object.entries(opt.scores).forEach(([p, v]) => {
+    if (scores[p] !== undefined) scores[p] += v;
+  });
+
+  currentQ++;
+  if (currentQ >= QUESTIONS.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResult() {
+  // Sort personas by score
+  const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+  const topPersona = sorted[0][0];
+  const topScore   = sorted[0][1];
+  const totalScore = sorted.reduce((a,b) => a+b[1], 0);
+  const confPct    = totalScore > 0 ? Math.min(99, Math.round((topScore/totalScore)*100 * 2.2)) : 50;
+
+  const pd = PERSONAS[topPersona];
+
+  showScreen('screen-result');
+
+  // Header
+  // Show name + team tag
+  const nameTag = document.getElementById('result-name-tag');
+  if (sponsorName && sponsorTeam) {
+    nameTag.textContent = sponsorName + '  ·  ' + sponsorTeam;
+    nameTag.style.display = 'inline-block';
+  } else {
+    nameTag.style.display = 'none';
+  }
+  document.getElementById('result-persona-name').textContent = topPersona;
+  document.getElementById('result-persona-name').style.color = pd.color;
+  document.getElementById('result-tagline').textContent = pd.tagline;
+  document.getElementById('conf-pct').textContent = `${confPct}%`;
+
+  setTimeout(() => {
+    document.getElementById('conf-fill').style.width = `${confPct}%`;
+  }, 100);
+
+  // Score bars
+  const maxScore = sorted[0][1];
+  const sb = document.getElementById('score-bars');
+  sb.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--mid);letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px;">Score breakdown</div>';
+  sorted.slice(0,6).forEach(([p,v],i) => {
+    const pct = maxScore > 0 ? (v/maxScore)*100 : 0;
+    sb.innerHTML += `
+      <div class="score-row">
+        <div class="score-name">${p}</div>
+        <div class="score-track"><div class="score-fill ${i===0?'top':''}" style="width:0%" data-w="${pct}%"></div></div>
+        <div class="score-num">${v}</div>
+      </div>`;
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.score-fill').forEach(el => {
+      el.style.width = el.dataset.w;
+    });
+  }, 200);
+
+  // Stats
+  const sr = document.getElementById('stats-row');
+  sr.innerHTML = `
+    <div class="stat-box">
+      <div class="stat-val" style="color:${pd.color}">${pd.stats.eff}</div>
+      <div class="stat-lbl">Efficiency Score</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:${pd.color}">#${pd.stats.rank}</div>
+      <div class="stat-lbl">Avg Player Rank Won</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:${pd.color}">${pd.stats.spend_pct}</div>
+      <div class="stat-lbl">Budget Used (R1-R3)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:${pd.color}">${pd.stats.r1_picks}</div>
+      <div class="stat-lbl">Avg R1 Picks</div>
+    </div>`;
+
+  // Strategy
+  document.getElementById('strategy-box').innerHTML = `
+    <h3>Your Core Strategy</h3>
+    <p>${pd.strategy}</p>
+    <br>
+    <p><strong>R1:</strong> ${pd.r1_behavior}</p>
+    <p style="margin-top:6px"><strong>R2:</strong> ${pd.r2_behavior}</p>
+    <p style="margin-top:6px"><strong>R3:</strong> ${pd.r3_behavior}</p>`;
+
+  // Persona card
+  document.getElementById('persona-card-body').innerHTML = `
+    <div class="persona-card">
+      <div class="pc-header">
+        <div class="pc-icon">${pd.icon}</div>
+        <div>
+          <div class="pc-name" style="color:${pd.color}">${topPersona}</div>
+          <div style="font-size:12px;color:var(--mid);margin-top:2px;">${pd.tagline}</div>
+        </div>
+      </div>
+      <div class="pc-body">
+        <div class="pc-section">
+          <div class="pc-section-label">Profile</div>
+          <p>${pd.description}</p>
+        </div>
+        <div class="pc-section">
+          <div class="pc-section-label">Simulation Finding (150 runs)</div>
+          <p>${pd.sim_note}</p>
+        </div>
+      </div>
+    </div>`;
+
+  // Rivals
+  document.getElementById('rivals-row').innerHTML = `
+    <div class="rival-box">
+      <div class="rb-label threat">⚠️ Watch Out For</div>
+      <p>${pd.threat}</p>
+    </div>
+    <div class="rival-box">
+      <div class="rb-label ally">↔ Potential Conflict</div>
+      <p>${pd.ally}</p>
+    </div>`;
+}
+
+function retake() {
+  currentQ = 0;
+  selected = null;
+  sponsorName = '';
+  sponsorTeam = '';
+  Object.keys(PERSONAS).forEach(p => scores[p] = 0);
+  document.getElementById('sponsor-name').value = '';
+  document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('id-proceed-btn').classList.remove('ready');
+  showScreen('screen-identify');
+}
+</script>
+</body>
+</html>
